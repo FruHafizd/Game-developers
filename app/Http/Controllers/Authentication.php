@@ -205,4 +205,18 @@ class Authentication extends Controller
     ], 200); 
     }
 
+    public function deleteUser(Request $request, $id)  {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'not_found',
+                'message' => 'Resource not found'
+            ], 403);
+        }
+
+        $user->delete();
+        return response()->noContent(); // HTTP 204
+    }
+
 }
