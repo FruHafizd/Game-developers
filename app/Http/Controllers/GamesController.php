@@ -6,7 +6,10 @@ use App\Models\Game;
 use App\Models\Score;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class GamesController extends Controller
 {
@@ -76,4 +79,41 @@ public function listGames(Request $request)
         'content' => $content
     ]);
 }
+
+
+public function createGame(Request $request)  {
+    $validator = Validator::make($request->all(),[
+        'title' => 'required|min:3|max:60',
+        'description' => 'required|min:0|max:200'
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'invalid',
+            'errors' => $validator->errors()
+        ], 400);
+    }
+    
+    $slug = Str::slug($request->title);
+    if (Game::where('slug',$slug)->exists()) {
+        return response()->json([
+            'status' => 'invalid',
+            'message' => 'Game title already exists'
+        ],400);
+    }
+
+    $game = Game::create([
+        'title' => $request->title,
+        'slug' => $slug,
+        'description' => $request->description,
+        'created_by' => Auth::id() 
+    ]);
+
+    return response()->json([
+        'status' => 'success',
+        'slug' => $game->slug
+    ],201);
+
+}   
+
 }
