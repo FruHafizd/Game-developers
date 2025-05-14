@@ -147,4 +147,19 @@ class Authentication extends Controller
 
     }
 
+    public function getAllUser()  {
+        $admin = User::get([
+            'username',
+            'last_login_at',
+            'created_at',
+            'updated_at',
+        ]);
+
+        return response()->json([
+            'totalElements' => $admin->count(),
+            'content' => $admin
+        ]);
+
+    }
+
 }
