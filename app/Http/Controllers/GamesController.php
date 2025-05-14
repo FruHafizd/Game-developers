@@ -116,4 +116,30 @@ public function createGame(Request $request)  {
 
 }   
 
+public function getDetailGame(Request $request,$slug)
+{
+    $game = Game::with(['creator','versions'])->where('slug',$slug)->first();
+
+    if (!$game) {
+    return response()->json([
+            'status' => 'not_found',
+            'message' => 'Resource not found'
+        ], 404);
+    }
+
+    $latestVersion = $game->versions->sortByDesc('created_at')->first();
+    return response()->json([
+            'slug' => $game->slug,
+            'title' => $game->title,
+            'description' => $game->description,
+            'thumbnail' => $latestVersion ? '/games/' . $game->slug . '/'.$latestVersion->version.'/thumbnail.png' : null,
+            'uploadTimestamp' => $latestVersion ? $latestVersion->created_at->toIso8601String() : null,
+            'author' => $game->creator->username,
+            'scoreCount' => Score::whereIn('game_version_id', $game->versions->pluck('id'))->count(),
+            'gamePath' => $latestVersion ? '/games/'.$game->slug.'/'.$latestVersion->id.'/' : null
+    ]);
+
+}
+
+
 }
