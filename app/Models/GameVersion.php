@@ -15,4 +15,8 @@ class GameVersion extends Model
         'storage_path',
         'deleted_at'
     ];
+
+    public function game()  {
+        return $this->belongsTo(Game::class);
+    }
 }
