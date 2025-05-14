@@ -162,4 +162,47 @@ class Authentication extends Controller
 
     }
 
+   public function updateUser(Request $request, $id) {
+    $user = User::find($id);
+
+    if (!$user) {
+        return response()->json([
+            'status' => 'not_found',
+            'message' => 'Resource not found'
+        ], 404);
+    }
+
+    $validator = Validator::make($request->all(), [
+        'username' => 'sometimes|unique:users,username,'.$id.'|min:4|max:60',
+        'password' => 'sometimes|min:5|max:10'
+    ]);
+
+    if ($validator->fails()) {
+        $errors = $validator->errors();
+        $message = $errors->has('username') && str_contains($errors->first('username'), 'taken') 
+            ? 'Username already exists' 
+            : 'Invalid field(s) in request';
+
+        return response()->json([
+            'status' => 'invalid',
+            'message' => $message,
+            'errors' => $errors
+        ], 400);
+    }
+
+    // Hanya update field yang diinput
+    $updateData = [];
+    if ($request->has('username')) {
+        $updateData['username'] = $request->username;
+    }
+    if ($request->has('password')) {
+        $updateData['password'] = Hash::make($request->password);
+    }
+    $user->update($updateData);
+    return response()->json([
+        'status' => 'success',
+        'username' => $user->username,
+    ], 200); 
+    }
+
 }
