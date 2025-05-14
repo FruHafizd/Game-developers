@@ -100,4 +100,19 @@ class Authentication extends Controller
         ]);
     }
 
+    public function getAllAdmins(Request $request)  {
+        $admin = Administrator::get([
+            'username',
+            'last_login_at',
+            'created_at',
+            'updated_at',
+        ]);
+
+        return response()->json([
+            'totalElements' => $admin->count(),
+            'content' => $admin
+        ]);
+
+    }
+
 }
