@@ -115,4 +115,36 @@ class Authentication extends Controller
 
     }
 
+    public function createUser(Request $request)  {
+        $validator  = Validator::make($request->all(),[
+            'username' => 'required|unique:users,username|min:4|max:60',
+            'password' => 'required|min:5|max:10'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid field(s) in request',
+                'errors' => $validator->errors()
+            ],400);
+        }
+
+        $user = User::create([
+            'username' => $request->username,
+            'password' => Hash::make($request->password)
+        ]);
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User registration successful',
+            'data' => [
+                'username' => $user->username,
+                'token' => $token,
+            ]
+        ],201);
+
+    }
+
 }

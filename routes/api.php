@@ -14,4 +14,5 @@ Route::post('v1/auth/signout',[Authentication::class,'signout'])->middleware('au
 
 Route::middleware(['auth:sanctum','is_admin'])->group(function ()  {
     Route::get('v1/admins',[Authentication::class,'getAllAdmins']);
+    Route::post('v1/users',[Authentication::class,'createUser']);
 });
