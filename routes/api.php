@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Authentication;
+use App\Http\Controllers\GamesController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('v1/auth/signup',[Authentication::class,'signup']);
 Route::post('v1/auth/signin',[Authentication::class,'signin']);
 Route::post('v1/auth/signout',[Authentication::class,'signout'])->middleware('auth:sanctum');
+
+Route::post('v1/games',[GamesController::class,'listGames']);
 
 Route::middleware(['auth:sanctum','is_admin'])->group(function ()  {
     Route::get('v1/admins',[Authentication::class,'getAllAdmins']);

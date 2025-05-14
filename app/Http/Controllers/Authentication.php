@@ -148,7 +148,7 @@ class Authentication extends Controller
     }
 
     public function getAllUser()  {
-        $admin = User::get([
+        $user = User::get([
             'username',
             'last_login_at',
             'created_at',
@@ -156,8 +156,8 @@ class Authentication extends Controller
         ]);
 
         return response()->json([
-            'totalElements' => $admin->count(),
-            'content' => $admin
+            'totalElements' => $user->count(),
+            'content' => $user
         ]);
 
     }
