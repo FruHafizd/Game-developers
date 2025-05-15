@@ -7,6 +7,7 @@ use App\Models\GameVersion;
 use App\Models\Score;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -321,6 +322,59 @@ public function serveGameFile($slug, $version, $filename = null)
             'Content-Type' => $contentType,
             'Cache-Control' => 'public, max-age=31536000' // Cache 1 tahun
         ]);
+}
+
+public function getGameScores($slug)
+{
+        // Cari game berdasarkan slug
+        $game = Game::where('slug', $slug)->first();
+
+        if (!$game) {
+            return response()->json([
+                'status' => 'not_found',
+                'message' => 'Game tidak ditemukan'
+            ], 404);
+        }
+
+        // Ambil semua versi game ini
+        $gameVersionIds = GameVersion::where('game_id', $game->id)
+            ->pluck('id')
+            ->toArray();
+
+        if (empty($gameVersionIds)) {
+            return response()->json([
+                'scores' => []
+            ], 200);
+        }
+
+        // Query untuk mendapatkan skor tertinggi untuk setiap user
+        $scores = DB::table('users')
+            ->join('scores', 'users.id', '=', 'scores.user_id')
+            ->join('game_versions', 'scores.game_version_id', '=', 'game_versions.id')
+            ->where('game_versions.game_id', $game->id)
+            ->select([
+                'users.username',
+                DB::raw('MAX(scores.score) as score'),
+                DB::raw('(SELECT created_at FROM scores s2 
+                          WHERE s2.user_id = scores.user_id 
+                          AND s2.game_version_id IN (' . implode(',', $gameVersionIds) . ') 
+                          AND s2.score = MAX(scores.score) 
+                          LIMIT 1) as timestamp')
+            ])
+            ->groupBy('users.id', 'users.username')
+            ->orderByDesc('score')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'username' => $item->username,
+                    'score' => (int) $item->score,
+                    'timestamp' => $item->timestamp
+                ];
+            });
+
+        return response()->json([
+            'scores' => $scores
+        ], 200);
 }
 
 }

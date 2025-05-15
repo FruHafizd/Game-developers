@@ -24,6 +24,8 @@ Route::delete('v1/games/{slug}',[GamesController::class,'deleteGame'])->middlewa
 
 Route::get('v1/users/{username}', [Authentication::class, 'getUserDetails']);
 
+Route::get('v1/games/{slug}/scores', [GamesController::class, 'getGameScores']);
+
 Route::middleware(['auth:sanctum','is_admin'])->group(function ()  {
     Route::get('v1/admins',[Authentication::class,'getAllAdmins']);
     Route::post('v1/users',[Authentication::class,'createUser']);
