@@ -5,10 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Game;
 use App\Models\GameVersion;
 use App\Models\Score;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -216,6 +214,53 @@ public function uploadGameVersion(Request $request,$slug)  {
             'message' => 'Failed to process upload'
         ],500);
     }
+
+}
+
+public function updateGame(Request $request, $slug)  {
+    $game = Game::where('slug',$slug)->first();
+
+    if (!$game) {
+        return response()->json([
+            'status' => 'not_found',
+            'message' => 'Game Not found'
+        ],404);
+    }
+
+    if ($game->created_by != Auth::id()) {
+        return response()->json([
+            'status' => 'forbidden',
+            'message' => 'You are not the game author'
+        ],403);
+    }
+
+    $validator = Validator::make($request->all(),[
+        'title' => 'sometimes|min:3|max:60',
+        'description' => 'sometimes|min:0|max:200'
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'invalid',
+            'message' => 'Invalid field(s) in request',
+            'errors' =>  $validator->errors()
+        ], 400);
+    }
+
+      // Hanya update field yang diinput
+    $updateData = [];
+    if ($request->has('title')) {
+        $updateData['title'] = $request->title;
+    }
+    if ($request->has('description')) {
+        $updateData['description'] = $request->description;
+    }
+    $game->update($updateData);
+    return response()->json([
+        'status' => 'success',
+        'title' => $game->title,
+        'description' => $game->description,
+    ], 200); 
 
 }
 
