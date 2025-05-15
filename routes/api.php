@@ -34,3 +34,10 @@ Route::middleware(['auth:sanctum','is_admin'])->group(function ()  {
     Route::put('v1/users/{id}',[Authentication::class,'updateUser']);
     Route::delete('v1/users/{id}',[Authentication::class,'deleteUser']);
 });
+
+Route::fallback(function () {
+    return response()->json([
+        'status' => 'not-found',
+        'message' => 'Not found'
+    ], 404);
+});
