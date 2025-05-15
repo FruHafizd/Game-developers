@@ -377,4 +377,48 @@ public function getGameScores($slug)
         ], 200);
 }
 
+public function storeScore(Request $request, $slug)
+{
+        // Validasi input
+        $request->validate([
+            'score' => 'required|numeric'
+        ]);
+        
+        // Cari game berdasarkan slug
+        $game = Game::where('slug', $slug)->first();
+        
+        // Jika game tidak ditemukan
+        if (!$game) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Game not found'
+            ], 404);
+        }
+        
+        // Ambil versi game terbaru
+        $latestVersion = GameVersion::where('game_id', $game->id)
+                            ->orderBy('created_at', 'desc')
+                            ->first();
+        
+        // Jika tidak ada versi game
+        if (!$latestVersion) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Versin game not found'
+            ], 404);
+        }
+        
+        // Buat skor baru
+        $score = new Score();
+        $score->user_id = Auth::id(); // ID pengguna yang login
+        $score->game_version_id = $latestVersion->id;
+        $score->score = $request->score;
+        $score->save();
+        
+        // Berikan respons sukses
+        return response()->json([
+            'status' => 'success',
+        ], 201); // 201 Created
+}
+
 }

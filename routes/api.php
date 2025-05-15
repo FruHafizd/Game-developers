@@ -18,6 +18,7 @@ Route::get('v1/games/{slug}',[GamesController::class,'getDetailGame']);
 Route::post('v1/games/{slug}/upload',[GamesController::class,'uploadGameVersion'])->middleware('auth:sanctum');
 Route::put('v1/games/{slug}',[GamesController::class,'updateGame'])->middleware('auth:sanctum');
 Route::delete('v1/games/{slug}',[GamesController::class,'deleteGame'])->middleware('auth:sanctum');
+Route::post('v1/games/{slug}/scores',[GamesController::class,'storeScore'])->middleware('auth:sanctum');
 // Route::get('/games/{slug}/{version}/{file?}', [GamesController::class, 'serveGameFile'])
 //      ->where('version', '\d+') // Version harus angka
 //      ->where('file', '.*'); // File boleh mengandung titik (untuk ekstensi)
