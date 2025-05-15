@@ -16,6 +16,7 @@ Route::post('v1/auth/signout',[Authentication::class,'signout'])->middleware('au
 Route::get('v1/games',[GamesController::class,'listGames']);
 Route::post('v1/games',[GamesController::class,'createGame'])->middleware('auth:sanctum');
 Route::get('v1/games/{slug}',[GamesController::class,'getDetailGame']);
+Route::post('v1/games/{slug}/upload',[GamesController::class,'uploadGameVersion'])->middleware('auth:sanctum');
 
 
 Route::middleware(['auth:sanctum','is_admin'])->group(function ()  {

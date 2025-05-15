@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Game;
+use App\Models\GameVersion;
 use App\Models\Score;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -138,6 +139,69 @@ public function getDetailGame(Request $request,$slug)
             'scoreCount' => Score::whereIn('game_version_id', $game->versions->pluck('id'))->count(),
             'gamePath' => $latestVersion ? '/games/'.$game->slug.'/'.$latestVersion->id.'/' : null
     ]);
+
+}
+
+public function uploadGameVersion(Request $request,$slug)  {
+    $game = Game::where('slug',$slug)->first();
+
+    if (!$game) {
+        return response()->json([
+            'status' => 'not_found',
+            'message' => 'Game Not found'
+        ],404);
+    }
+
+    if ($game->created_by != Auth::id()) {
+        return response()->json([
+            'status' => 'forbidden',
+            'message' => 'User is not the author of this game'
+        ],403);
+    }
+
+    if (!$request->hasFile('zipfile')) {
+        return response()->json([
+            'status' => 'bad_request',
+            'message' => 'Zipfile is required'
+        ],400);
+    }
+
+    $zipFile = $request->file('zipfile');
+    if ($zipFile->getClientOriginalExtension() !== 'zip') {
+        return response()->json([
+            'status' => 'bad_request',
+            'message' => 'File must be a ZIP archive'
+        ],400);
+    }
+
+    // Tentukan versi baru (increment dari versi terakhir)
+    $latestVersion = $game->versions()->orderByDesc('version')->first();
+    $newVersion = $latestVersion ? (int)$latestVersion->version + 1 : 1;
+
+    try {
+        $storagePath = "games/{$game->slug}/v/$newVersion";
+        $path = $zipFile->storeAs($storagePath, 'game.zip','public');
+
+        $gameVersion = new GameVersion([
+            'version' => $newVersion,
+            'storage_path' => $storagePath,
+            'game_id' => $game->id,
+        ]);
+
+        $gameVersion->save();
+
+        return response()->json([
+            'status' => 'success',
+            'version' => $newVersion,
+            'path' => $storagePath
+        ],201);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'Internal Server Error',
+            'message' => 'Failed to process upload'
+        ],500);
+    }
 
 }
 
