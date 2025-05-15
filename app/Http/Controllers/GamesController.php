@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -159,44 +160,57 @@ public function uploadGameVersion(Request $request,$slug)  {
         ],403);
     }
 
-    if (!$request->hasFile('zipfile')) {
-        return response()->json([
-            'status' => 'bad_request',
-            'message' => 'Zipfile is required'
-        ],400);
-    }
-
-    $zipFile = $request->file('zipfile');
-    if ($zipFile->getClientOriginalExtension() !== 'zip') {
-        return response()->json([
-            'status' => 'bad_request',
-            'message' => 'File must be a ZIP archive'
-        ],400);
-    }
+    // 4. Validasi file
+    $request->validate([
+        'zipfile' => 'required|file|mimes:zip|max:10240', // Max 10MB
+        'thumbnail' => 'nullable|image|mimes:png,jpg|max:2048' // Max 2MB
+    ]);
 
     // Tentukan versi baru (increment dari versi terakhir)
     $latestVersion = $game->versions()->orderByDesc('version')->first();
     $newVersion = $latestVersion ? (int)$latestVersion->version + 1 : 1;
+    $versionFolder = "v{$newVersion}";
+
+    //Path penyimpanan
+    $basePath = "games/{$game->slug}/{$versionFolder}";
 
     try {
-        $storagePath = "games/{$game->slug}/v/$newVersion";
-        $path = $zipFile->storeAs($storagePath, 'game.zip','public');
+        //  Simpan file game (zip)
+        $zipPath = $request->file('zipfile')->storeAs(
+            $basePath, 
+            'game.zip', 
+            'public'
+        );
 
+        //  Simpan thumbnail jika ada
+        $thumbnailPath = null;
+        if ($request->hasFile('thumbnail')) {
+            $thumbnailPath = $request->file('thumbnail')->storeAs(
+                $basePath,
+                'thumbnail.png', // Selalu simpan sebagai thumbnail.png
+                'public'
+            );
+        }
+
+        //  Simpan record versi baru
         $gameVersion = new GameVersion([
             'version' => $newVersion,
-            'storage_path' => $storagePath,
+            'storage_path' => $basePath,
             'game_id' => $game->id,
+            'thumbnail_path' => $thumbnailPath ? "{$basePath}/thumbnail.png" : null
         ]);
-
         $gameVersion->save();
 
         return response()->json([
             'status' => 'success',
             'version' => $newVersion,
-            'path' => $storagePath
-        ],201);
-
+            'game_path' => Storage::url("{$basePath}/game.zip"),
+            'thumbnail_path' => $thumbnailPath ? Storage::url($thumbnailPath) : null
+        ], 201);
+        
     } catch (\Exception $e) {
+        // Hapus file yang sudah terupload jika ada error
+        Storage::deleteDirectory("public/{$basePath}");
         return response()->json([
             'status' => 'Internal Server Error',
             'message' => 'Failed to process upload'
