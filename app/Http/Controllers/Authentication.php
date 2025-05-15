@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Administrator;
+use App\Models\Game;
+use App\Models\Score;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -218,5 +222,66 @@ class Authentication extends Controller
         $user->delete();
         return response()->noContent(); // HTTP 204
     }
+
+public function getUserDetails($username)
+{
+    // Get the requested user
+    $user = User::where('username', $username)->first();
+
+    if (!$user) {
+        return response()->json([
+            'status' => 'not_found',
+            'message' => 'User not found'
+        ], 404);
+    }
+
+    // Get games authored by the user
+    $authoredGamesQuery = Game::where('created_by', $user->id);
+    
+    // If not the user themselves, only show games that have versions
+    if (Auth::id() !== $user->id) {
+        $authoredGamesQuery->has('versions');
+    }
+
+    $authoredGames = $authoredGamesQuery->get(['slug', 'title', 'description']);
+
+    // Get the user's high scores for each game
+    $highScores = Score::select([
+            'game_versions.game_id',
+            'scores.score',
+            'scores.created_at'
+        ])
+        ->join('game_versions', 'scores.game_version_id', '=', 'game_versions.id')
+        ->join('games', 'game_versions.game_id', '=', 'games.id')
+        ->where('scores.user_id', $user->id)
+        ->orderBy('scores.score', 'desc')
+        ->get()
+        ->groupBy('game_id')
+        ->map(function ($scores, $gameId) {
+            // Get the highest score for this game
+            $highestScore = $scores->first();
+            
+            // Get game details
+            $game = Game::find($gameId, ['slug', 'title', 'description']);
+            
+            return [
+                'game' => [
+                    'slug' => $game->slug,
+                    'title' => $game->title,
+                    'description' => $game->description
+                ],
+                'score' => $highestScore->score,
+                'timestamp' => $highestScore->created_at->toIso8601String()
+            ];
+        })
+        ->values(); // Convert to indexed array
+
+    return response()->json([
+        'username' => $user->username,
+        'registeredTimestamp' => $user->created_at->toIso8601String(),
+        'authoredGames' => $authoredGames,
+        'highscores' => $highScores
+    ], 200);
+}
 
 }

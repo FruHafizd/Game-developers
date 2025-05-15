@@ -52,4 +52,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Game::class, );
     }
+
+    public function scores()
+    {
+        return $this->hasMany(Score::class);
+    }
 }

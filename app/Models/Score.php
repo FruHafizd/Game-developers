@@ -19,4 +19,10 @@ class Score extends Model
     public function game()  {
         return $this->belongsTo(Game::class);
     }
+
+    public function gameVersion()
+    {
+        return $this->belongsTo(GameVersion::class);
+    }
+    
 }
