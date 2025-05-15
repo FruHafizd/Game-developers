@@ -264,5 +264,29 @@ public function updateGame(Request $request, $slug)  {
 
 }
 
+public function deleteGame($slug)  {
+    $game = Game::where('slug',$slug)->first();
+
+    if (!$game) {
+        return response()->json([
+            'status' => 'not_found',
+            'message' => 'Game Not found'
+        ],404);
+    }
+
+    if ($game->created_by != Auth::id()) {
+        return response()->json([
+            'status' => 'forbidden',
+            'message' => 'You are not the game author'
+        ],403);
+    }
+
+    $game->versions()->delete(); 
+    $game->scores()->delete();
+    $game->delete();
+
+    return response(null,204);
+}
+
 
 }

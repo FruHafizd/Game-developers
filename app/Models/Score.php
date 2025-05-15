@@ -16,4 +16,7 @@ class Score extends Model
         'version',
     ];
 
+    public function game()  {
+        return $this->belongsTo(Game::class);
+    }
 }

@@ -18,6 +18,7 @@ Route::post('v1/games',[GamesController::class,'createGame'])->middleware('auth:
 Route::get('v1/games/{slug}',[GamesController::class,'getDetailGame']);
 Route::post('v1/games/{slug}/upload',[GamesController::class,'uploadGameVersion'])->middleware('auth:sanctum');
 Route::put('v1/games/{slug}',[GamesController::class,'updateGame'])->middleware('auth:sanctum');
+Route::delete('v1/games/{slug}',[GamesController::class,'deleteGame'])->middleware('auth:sanctum');
 
 
 Route::middleware(['auth:sanctum','is_admin'])->group(function ()  {
