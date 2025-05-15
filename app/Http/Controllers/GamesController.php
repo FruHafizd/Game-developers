@@ -288,5 +288,39 @@ public function deleteGame($slug)  {
     return response(null,204);
 }
 
+public function serveGameFile($slug, $version, $filename = null)
+{
+        // Default file adalah 'game.zip' jika tidak ada parameter filename
+        $targetFile = $filename ?? 'game.zip';
+        $path = "games/{$slug}/v{$version}/{$targetFile}";
+
+        // Cek apakah file ada di storage
+        if (!Storage::disk('public')->exists($path)) {
+            abort(404, 'File not found');
+        }
+
+        // Dapatkan full path fisik
+        $fullPath = Storage::disk('public')->path($path);
+
+        // Tentukan Content-Type berdasarkan ekstensi file
+        $mimeTypes = [
+            'zip' => 'application/zip',
+            'png' => 'image/png',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'js' => 'application/javascript',
+            'html' => 'text/html',
+            'css' => 'text/css'
+        ];
+
+        $extension = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+        $contentType = $mimeTypes[$extension] ?? 'application/octet-stream';
+
+        // Return file response dengan header yang sesuai
+        return response()->file($fullPath, [
+            'Content-Type' => $contentType,
+            'Cache-Control' => 'public, max-age=31536000' // Cache 1 tahun
+        ]);
+}
 
 }
