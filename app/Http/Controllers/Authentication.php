@@ -53,24 +53,6 @@ class Authentication extends Controller
             'password' => 'required'
         ]);
 
-        // Login Admin
-        $admin = Administrator::where('username',$request->username)->first();
-
-        if ($admin && Hash::check($request->password,$admin->password)) {
-            $token = $admin->createToken('auth_token')->plainTextToken;
-            $admin->last_login_at = now();
-            $admin->save();
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Login successful',
-                'data' => [
-                    'username' => $admin->username,
-                    'token' => $token,
-                ]
-            ],200);
-
-        }
-
         // Login User
         $user = User::where('username',$request->username)->first();
 
@@ -105,21 +87,36 @@ class Authentication extends Controller
     }
 
     public function getAllAdmins(Request $request)  {
-        $admin = Administrator::get([
-            'username',
-            'last_login_at',
-            'created_at',
-            'updated_at',
-        ]);
+        $user = $request->user(); // user yang sudah login (dari sanctum)
+
+        // Cek apakah username user yang login adalah admin1 atau admin2
+        if (!in_array($user->username, ['admin1', 'admin2'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Forbidden: You are not allowed to access this resource.'
+            ], 403);
+        }
+
+       $admin = User::whereIn('username', ['admin1', 'admin2'])
+        ->get(['username', 'last_login_at', 'created_at', 'updated_at']);
 
         return response()->json([
             'totalElements' => $admin->count(),
             'content' => $admin
         ]);
-
     }
 
     public function createUser(Request $request)  {
+        $user = $request->user(); // user yang sudah login (dari sanctum)
+
+        // Cek apakah username user yang login adalah admin1 atau admin2
+        if (!in_array($user->username, ['admin1', 'admin2'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Forbidden: You are not allowed to access this resource.'
+            ], 403);
+        }
+
         $validator  = Validator::make($request->all(),[
             'username' => 'required|unique:users,username|min:4|max:60',
             'password' => 'required|min:5|max:10'
@@ -151,7 +148,17 @@ class Authentication extends Controller
 
     }
 
-    public function getAllUser()  {
+    public function getAllUser(Request $request)  {
+        $user = $request->user(); // user yang sudah login (dari sanctum)
+
+        // Cek apakah username user yang login adalah admin1 atau admin2
+        if (!in_array($user->username, ['admin1', 'admin2'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Forbidden: You are not allowed to access this resource.'
+            ], 403);
+        }
+
         $user = User::get([
             'username',
             'last_login_at',
@@ -167,6 +174,16 @@ class Authentication extends Controller
     }
 
    public function updateUser(Request $request, $id) {
+    $user = $request->user(); // user yang sudah login (dari sanctum)
+
+    // Cek apakah username user yang login adalah admin1 atau admin2
+    if (!in_array($user->username, ['admin1', 'admin2'])) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Forbidden: You are not allowed to access this resource.'
+        ], 403);
+    }
+
     $user = User::find($id);
 
     if (!$user) {
@@ -210,6 +227,16 @@ class Authentication extends Controller
     }
 
     public function deleteUser(Request $request, $id)  {
+        $user = $request->user(); // user yang sudah login (dari sanctum)
+
+        // Cek apakah username user yang login adalah admin1 atau admin2
+        if (!in_array($user->username, ['admin1', 'admin2'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Forbidden: You are not allowed to access this resource.'
+            ], 403);
+        }
+
         $user = User::find($id);
 
         if (!$user) {
