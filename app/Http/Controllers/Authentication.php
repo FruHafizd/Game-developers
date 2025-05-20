@@ -160,6 +160,7 @@ class Authentication extends Controller
         }
 
         $user = User::get([
+            'id',
             'username',
             'last_login_at',
             'created_at',
@@ -173,7 +174,7 @@ class Authentication extends Controller
 
     }
 
-   public function updateUser(Request $request, $id) {
+   public function updateUser(Request $request, $username) {
     $user = $request->user(); // user yang sudah login (dari sanctum)
 
     // Cek apakah username user yang login adalah admin1 atau admin2
@@ -184,8 +185,8 @@ class Authentication extends Controller
         ], 403);
     }
 
-    $user = User::find($id);
-
+    $user = User::where('username', $username)->first();
+    
     if (!$user) {
         return response()->json([
             'status' => 'not_found',
@@ -194,7 +195,7 @@ class Authentication extends Controller
     }
 
     $validator = Validator::make($request->all(), [
-        'username' => 'sometimes|unique:users,username,'.$id.'|min:4|max:60',
+        'username' => 'sometimes|unique:users,username,'.$username.'|min:4|max:60',
         'password' => 'sometimes|min:5|max:10'
     ]);
 
@@ -226,7 +227,7 @@ class Authentication extends Controller
     ], 200); 
     }
 
-    public function deleteUser(Request $request, $id)  {
+    public function deleteUser(Request $request, $username)  {
         $user = $request->user(); // user yang sudah login (dari sanctum)
 
         // Cek apakah username user yang login adalah admin1 atau admin2
@@ -237,8 +238,7 @@ class Authentication extends Controller
             ], 403);
         }
 
-        $user = User::find($id);
-
+        $user = User::where('username', $username)->first();
         if (!$user) {
             return response()->json([
                 'status' => 'not_found',

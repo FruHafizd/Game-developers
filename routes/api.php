@@ -23,7 +23,7 @@ Route::post('v1/games/{slug}/scores',[GamesController::class,'storeScore'])->mid
 //      ->where('version', '\d+') // Version harus angka
 //      ->where('file', '.*'); // File boleh mengandung titik (untuk ekstensi)
 
-Route::get('v1/users/{username}', [Authentication::class, 'getUserDetails']);
+Route::get('v1/users/{username}', [Authentication::class, 'getUserDetails'])->middleware('auth:sanctum');
 
 Route::get('v1/games/{slug}/scores', [GamesController::class, 'getGameScores']);
 
@@ -31,8 +31,8 @@ Route::middleware(['auth:sanctum'])->group(function ()  {
     Route::get('v1/admins',[Authentication::class,'getAllAdmins']);
     Route::post('v1/users',[Authentication::class,'createUser']);
     Route::get('v1/users',[Authentication::class,'getAllUser']);
-    Route::put('v1/users/{id}',[Authentication::class,'updateUser']);
-    Route::delete('v1/users/{id}',[Authentication::class,'deleteUser']);
+    Route::put('v1/users/{username}',[Authentication::class,'updateUser']);
+    Route::delete('v1/users/{username}',[Authentication::class,'deleteUser']);
 });
 
 Route::fallback(function () {
