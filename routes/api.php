@@ -23,7 +23,7 @@ Route::post('v1/games/{slug}/scores',[GamesController::class,'storeScore'])->mid
 //      ->where('version', '\d+') // Version harus angka
 //      ->where('file', '.*'); // File boleh mengandung titik (untuk ekstensi)
 
-Route::get('v1/users/{username}', [Authentication::class, 'getUserDetails'])->middleware('auth:sanctum');
+Route::get('v1/users/{username}', [Authentication::class, 'getUserDetails']);
 
 Route::get('v1/games/{slug}/scores', [GamesController::class, 'getGameScores']);
 
