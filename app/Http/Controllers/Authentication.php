@@ -159,13 +159,14 @@ class Authentication extends Controller
             ], 403);
         }
 
-        $user = User::get([
-            'id',
+        $user = User::whereNotIn('username', ['admin1', 'admin2'])
+        ->get([
             'username',
             'last_login_at',
             'created_at',
             'updated_at',
         ]);
+
 
         return response()->json([
             'totalElements' => $user->count(),
