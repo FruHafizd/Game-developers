@@ -66,7 +66,7 @@ public function listGames(Request $request)
             'slug' => $game->slug,
             'title' => $game->title,
             'description' => $game->description,
-            'thumbnail' => $latestVersion ? '/games/' . $game->slug . '/'.$latestVersion->version.'/thumbnail.png' : null,
+            'thumbnail' => $latestVersion ? '/games/' . $game->slug . '/v'.$latestVersion->version.'/thumbnail.png' : null,
             'uploadTimestamp' => $latestVersion ? $latestVersion->created_at->toIso8601String() : null,
             'author' => $game->creator->username,
             'scoreCount' => Score::whereIn('game_version_id', $game->versions->pluck('id'))->count()
@@ -202,7 +202,7 @@ public function uploadGameVersion(Request $request,$slug)  {
 
         return response()->json([
             'status' => 'success',
-            'version' => $newVersion,
+            'version' => "v{$newVersion}",
             'game_path' => Storage::url("{$basePath}/game.zip"),
             'thumbnail_path' => $thumbnailPath ? Storage::url($thumbnailPath) : null
         ], 201);
