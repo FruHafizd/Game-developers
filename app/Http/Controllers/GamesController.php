@@ -134,6 +134,7 @@ public function getDetailGame(Request $request,$slug)
             'title' => $game->title,
             'description' => $game->description,
             'thumbnail' => $latestVersion ? '/games/' . $game->slug . '/v'.$latestVersion->version.'/thumbnail.png' : null,
+            'zip' => $latestVersion ? '/games/' . $game->slug . '/v'.$latestVersion->version.'/game.zip' : null,
             'uploadTimestamp' => $latestVersion ? $latestVersion->created_at->toIso8601String() : null,
             'author' => $game->creator->username,
             'scoreCount' => Score::whereIn('game_version_id', $game->versions->pluck('id'))->count(),
