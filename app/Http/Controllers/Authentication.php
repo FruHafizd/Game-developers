@@ -268,14 +268,25 @@ public function getUserDetails($username)
     }
 
     // Get games authored by the user
-    $authoredGamesQuery = Game::where('created_by', $user->id);
-    
+    $authoredGamesQuery = Game::where('created_by', $user->id)->with(['versions' => function($query) {
+        $query->orderByDesc('created_at'); // Pastikan versi terbaru di urutan pertama
+    }]);
+
     // If not the user themselves, only show games that have versions
     if (Auth::id() !== $user->id) {
         $authoredGamesQuery->has('versions');
     }
 
-    $authoredGames = $authoredGamesQuery->get(['slug', 'title', 'description']);
+    // Build authoredGames array with thumbnail
+    $authoredGames = $authoredGamesQuery->get()->map(function ($game) {
+        $latestVersion = $game->versions->first();
+        return [
+            'slug' => $game->slug,
+            'title' => $game->title,
+            'description' => $game->description,
+            'thumbnail' => $latestVersion ? 'games/' . $game->slug . '/v' . $latestVersion->version . '/thumbnail.png' : null
+        ];
+    });
 
     // Get the user's high scores for each game
     $highScores = Score::select([
@@ -290,18 +301,19 @@ public function getUserDetails($username)
         ->get()
         ->groupBy('game_id')
         ->map(function ($scores, $gameId) {
-            // Get the highest score for this game
             $highestScore = $scores->first();
-            
-            // Get game details
-            $game = Game::with('versions')->find($gameId, ['id', 'slug', 'title', 'description']);
-            $latestVersion = $game->versions->sortByDesc('created_at')->first();
+            $game = Game::with(['versions' => function($q) {
+                $q->orderByDesc('created_at');
+            }])->find($gameId);
+
+            $latestVersion = $game->versions->first();
+
             return [
                 'game' => [
                     'slug' => $game->slug,
                     'title' => $game->title,
                     'description' => $game->description,
-                    'thumbnail' =>  $latestVersion ? '/games/' . $game->slug . '/v'.$latestVersion->version.'/thumbnail.png' : null
+                    'thumbnail' => $latestVersion ? '/games/' . $game->slug . '/v' . $latestVersion->version . '/thumbnail.png' : null
                 ],
                 'score' => $highestScore->score,
                 'timestamp' => $highestScore->created_at->toIso8601String()
@@ -316,5 +328,6 @@ public function getUserDetails($username)
         'highscores' => $highScores
     ], 200);
 }
+
 
 }
