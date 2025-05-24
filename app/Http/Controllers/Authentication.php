@@ -294,13 +294,14 @@ public function getUserDetails($username)
             $highestScore = $scores->first();
             
             // Get game details
-            $game = Game::find($gameId, ['slug', 'title', 'description']);
-            
+            $game = Game::with('versions')->find($gameId, ['id', 'slug', 'title', 'description']);
+            $latestVersion = $game->versions->sortByDesc('created_at')->first();
             return [
                 'game' => [
                     'slug' => $game->slug,
                     'title' => $game->title,
-                    'description' => $game->description
+                    'description' => $game->description,
+                    'thumbnail' =>  $latestVersion ? '/games/' . $game->slug . '/v'.$latestVersion->version.'/thumbnail.png' : null
                 ],
                 'score' => $highestScore->score,
                 'timestamp' => $highestScore->created_at->toIso8601String()
