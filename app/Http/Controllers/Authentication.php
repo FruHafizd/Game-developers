@@ -177,10 +177,10 @@ class Authentication extends Controller
     }
 
    public function updateUser(Request $request, $id) {
-    $user = $request->user(); // user yang sudah login (dari sanctum)
+    $authenticatedUser = $request->user(); // user yang sudah login (dari sanctum)
 
     // Cek apakah username user yang login adalah admin1 atau admin2
-    if (!in_array($user->username, ['admin1', 'admin2'])) {
+    if (!in_array($authenticatedUser->username, ['admin1', 'admin2'])) {
         return response()->json([
             'status' => 'error',
             'message' => 'Forbidden: You are not allowed to access this resource.'
@@ -222,12 +222,15 @@ class Authentication extends Controller
     if ($request->has('password')) {
         $updateData['password'] = Hash::make($request->password);
     }
+    
     $user->update($updateData);
+    
     return response()->json([
         'status' => 'success',
+        'message' => 'User updated successfully',
         'username' => $user->username,
     ], 200); 
-    }
+}
 
     public function deleteUser(Request $request, $id)  {
         $user = $request->user(); // user yang sudah login (dari sanctum)
